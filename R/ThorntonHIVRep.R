@@ -48,7 +48,7 @@ permuteHIV <- function(df, random = TRUE){
   #return(ate)
 }
 
-sanitycheck = permuteHIV(hiv, random = FALSE)
+true_effect = permuteHIV(hiv, random = FALSE)
 
 iterations <- 100
 
@@ -108,6 +108,8 @@ p_value_10000 <- permutation %>%
   pull(rank)/iterations
 
 
-hist(permutation$delta, freq = FALSE, breaks = 200)
-abline(v = permutation$delta[1])
+hist(permutation$delta, freq = FALSE, breaks = 200, main = "Placebo Distribution and True Effect", xlab = "Coefficient on ANY")
+abline(v = true_effect)
+text(0.4, 10, "True Effect")
+text(0.4, 9, as.character(round(true_effect, digits = 4)))
 
