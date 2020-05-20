@@ -27,28 +27,34 @@ permuteHIV <- function(df, random = TRUE){
       mutate(any = c(rep(1, first_half), rep(0, second_half)))
   }
   
-  te1 <- tb %>%
-    filter(any == 1) %>%
-    pull(got) %>%
-    mean(na.rm = TRUE)
+  lm = lm(got~any+male, data = tb)
   
-  te0 <- tb %>%
-    filter(any == 0) %>%
-    pull(got) %>% 
-    mean(na.rm = TRUE)
+  deltacoef = lm$coefficients
+  deltacoef = deltacoef[2]
+  return(deltacoef)
   
-  ate <-  te1 - te0
+  # te1 <- tb %>%
+  #   filter(any == 1) %>%
+  #   pull(got) %>%
+  #   mean(na.rm = TRUE)
+  # 
+  # te0 <- tb %>%
+  #   filter(any == 0) %>%
+  #   pull(got) %>% 
+  #   mean(na.rm = TRUE)
+  # 
+  # ate <-  te1 - te0
   
-  return(ate)
+  #return(ate)
 }
 
-permuteHIV(hiv, random = FALSE)
+sanitycheck = permuteHIV(hiv, random = FALSE)
 
-iterations <- 1000
+iterations <- 100
 
 permutation <- tibble(
   iteration = c(seq(iterations)), 
-  ate = as.numeric(
+  delta = as.numeric(
     c(permuteHIV(hiv, random = FALSE), map(seq(iterations-1), ~permuteHIV(hiv, random = TRUE)))
   )
 )
@@ -56,9 +62,52 @@ permutation <- tibble(
 #calculating the p-value
 
 permutation <- permutation %>% 
-  arrange(-ate) %>% 
+  arrange(-delta) %>% 
   mutate(rank = seq(iterations))
 
-p_value <- permutation %>% 
+p_value_100 <- permutation %>% 
   filter(iteration == 1) %>% 
   pull(rank)/iterations
+
+iterations <- 1000
+
+permutation <- tibble(
+  iteration = c(seq(iterations)), 
+  delta = as.numeric(
+    c(permuteHIV(hiv, random = FALSE), map(seq(iterations-1), ~permuteHIV(hiv, random = TRUE)))
+  )
+)
+
+#calculating the p-value
+
+permutation <- permutation %>% 
+  arrange(-delta) %>% 
+  mutate(rank = seq(iterations))
+
+p_value_1000 <- permutation %>% 
+  filter(iteration == 1) %>% 
+  pull(rank)/iterations
+
+iterations <- 10000
+
+permutation <- tibble(
+  iteration = c(seq(iterations)), 
+  delta = as.numeric(
+    c(permuteHIV(hiv, random = FALSE), map(seq(iterations-1), ~permuteHIV(hiv, random = TRUE)))
+  )
+)
+
+#calculating the p-value
+
+permutation <- permutation %>% 
+  arrange(-delta) %>% 
+  mutate(rank = seq(iterations))
+
+p_value_10000 <- permutation %>% 
+  filter(iteration == 1) %>% 
+  pull(rank)/iterations
+
+
+hist(permutation$delta, freq = FALSE, breaks = 200)
+abline(v = permutation$delta[1])
+
